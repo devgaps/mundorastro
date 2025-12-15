@@ -49,7 +49,7 @@ export const Logo = ({ className, size = "md", variant = "full" }: LogoProps) =>
             size === "md" && "text-xl",
             size === "lg" && "text-2xl"
           )}>
-            SGRV
+            MUNDORASTRO
           </span>
           <span className={cn(
             "text-muted-foreground leading-none",
