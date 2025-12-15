@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import {
@@ -79,6 +79,12 @@ const navSections: NavSection[] = [
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    navigate("/login");
+  };
 
   const NavItemComponent = ({ item }: { item: NavItem }) => {
     const isActive = location.pathname === item.href;
@@ -158,16 +164,16 @@ export const Sidebar = () => {
 
       {/* Footer */}
       <div className="p-3 border-t border-sidebar-border">
-        <NavLink
-          to="/login"
+        <button
+          onClick={handleLogout}
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
             "text-sidebar-foreground/70 hover:bg-destructive/10 hover:text-destructive"
           )}
         >
           <LogOut className={cn("h-5 w-5 shrink-0", collapsed && "mx-auto")} />
           {!collapsed && <span className="text-sm font-medium">Sair</span>}
-        </NavLink>
+        </button>
       </div>
     </aside>
   );

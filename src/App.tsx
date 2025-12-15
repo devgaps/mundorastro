@@ -35,8 +35,8 @@ const App = () => (
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           
-          {/* Redirect root to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
           
           {/* Protected routes with sidebar layout */}
           <Route element={<DashboardLayout />}>

@@ -33,6 +33,7 @@ const Login = () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     if (username === "admin" && password === "admin") {
+      localStorage.setItem("isAuthenticated", "true");
       toast({
         title: "Bem-vindo!",
         description: "Login realizado com sucesso.",
