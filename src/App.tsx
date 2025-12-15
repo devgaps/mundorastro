@@ -13,6 +13,7 @@ import CadernoDeCampo from "./pages/CadernoDeCampo";
 import Safras from "./pages/Safras";
 import Producao from "./pages/Producao";
 import Rastreabilidade from "./pages/Rastreabilidade";
+import ConsultaQRCode from "./pages/ConsultaQRCode";
 import Expedicao from "./pages/Expedicao";
 import Etiquetas from "./pages/Etiquetas";
 import Financeiro from "./pages/Financeiro";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/safras" element={<Safras />} />
             <Route path="/producao" element={<Producao />} />
             <Route path="/rastreabilidade" element={<Rastreabilidade />} />
+            <Route path="/consulta-qrcode" element={<ConsultaQRCode />} />
             <Route path="/expedicao" element={<Expedicao />} />
             <Route path="/etiquetas" element={<Etiquetas />} />
             <Route path="/financeiro" element={<Financeiro />} />
