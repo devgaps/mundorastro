@@ -30,25 +30,48 @@ interface NavItem {
   href: string;
 }
 
-const mainNavItems: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Propriedades", icon: MapPin, href: "/propriedades" },
-  { label: "Talhões", icon: Grid3X3, href: "/talhoes" },
-  { label: "Caderno de Campo", icon: BookOpen, href: "/caderno-de-campo" },
-  { label: "Safras", icon: Sprout, href: "/safras" },
-  { label: "Produção", icon: Wheat, href: "/producao" },
-  { label: "Rastreabilidade", icon: QrCode, href: "/rastreabilidade" },
-  { label: "Expedição", icon: Truck, href: "/expedicao" },
-  { label: "Etiquetas", icon: Tag, href: "/etiquetas" },
-  { label: "Equipamentos", icon: Tractor, href: "/equipamentos" },
-  { label: "Financeiro", icon: DollarSign, href: "/financeiro" },
-  { label: "Relatórios", icon: BarChart3, href: "/relatorios" },
-];
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
 
-const secondaryNavItems: NavItem[] = [
-  { label: "Usuários", icon: Users, href: "/usuarios" },
-  { label: "Documentos", icon: FileText, href: "/documentos" },
-  { label: "Configurações", icon: Settings, href: "/configuracoes" },
+const dashboardItem: NavItem = { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" };
+
+const navSections: NavSection[] = [
+  {
+    title: "Cadastros",
+    items: [
+      { label: "Propriedades", icon: MapPin, href: "/propriedades" },
+      { label: "Talhões", icon: Grid3X3, href: "/talhoes" },
+      { label: "Equipamentos", icon: Tractor, href: "/equipamentos" },
+    ],
+  },
+  {
+    title: "Operações",
+    items: [
+      { label: "Caderno de Campo", icon: BookOpen, href: "/caderno-de-campo" },
+      { label: "Safras", icon: Sprout, href: "/safras" },
+      { label: "Produção", icon: Wheat, href: "/producao" },
+      { label: "Rastreabilidade", icon: QrCode, href: "/rastreabilidade" },
+      { label: "Expedição", icon: Truck, href: "/expedicao" },
+      { label: "Etiquetas", icon: Tag, href: "/etiquetas" },
+    ],
+  },
+  {
+    title: "Gestão",
+    items: [
+      { label: "Financeiro", icon: DollarSign, href: "/financeiro" },
+      { label: "Relatórios", icon: BarChart3, href: "/relatorios" },
+    ],
+  },
+  {
+    title: "Sistema",
+    items: [
+      { label: "Usuários", icon: Users, href: "/usuarios" },
+      { label: "Documentos", icon: FileText, href: "/documentos" },
+      { label: "Configurações", icon: Settings, href: "/configuracoes" },
+    ],
+  },
 ];
 
 export const Sidebar = () => {
@@ -74,6 +97,15 @@ export const Sidebar = () => {
           <span className="text-sm font-medium truncate">{item.label}</span>
         )}
       </NavLink>
+    );
+  };
+
+  const SectionLabel = ({ title }: { title: string }) => {
+    if (collapsed) return null;
+    return (
+      <span className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+        {title}
+      </span>
     );
   };
 
@@ -103,25 +135,23 @@ export const Sidebar = () => {
 
       {/* Main navigation */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-        <div className="space-y-1">
-          {mainNavItems.map((item) => (
-            <NavItemComponent key={item.href} item={item} />
-          ))}
+        {/* Dashboard - standalone */}
+        <div className="space-y-1 mb-4">
+          <NavItemComponent item={dashboardItem} />
         </div>
 
-        {/* Divider */}
-        <div className="my-4 border-t border-sidebar-border" />
-
-        <div className="space-y-1">
-          {!collapsed && (
-            <span className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
-              Sistema
-            </span>
-          )}
-          {secondaryNavItems.map((item) => (
-            <NavItemComponent key={item.href} item={item} />
-          ))}
-        </div>
+        {/* Sections */}
+        {navSections.map((section, index) => (
+          <div key={section.title} className="space-y-1">
+            {index > 0 && <div className="my-3 border-t border-sidebar-border" />}
+            <SectionLabel title={section.title} />
+            <div className="space-y-1 mt-1">
+              {section.items.map((item) => (
+                <NavItemComponent key={item.href} item={item} />
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}
