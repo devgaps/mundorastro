@@ -18,6 +18,7 @@ import {
   Sprout,
   DollarSign,
   QrCode,
+  ScanLine,
   Truck,
   Tag,
 } from "lucide-react";
@@ -53,6 +54,7 @@ const navSections: NavSection[] = [
       { label: "Safras", icon: Sprout, href: "/safras" },
       { label: "Produção", icon: Wheat, href: "/producao" },
       { label: "Rastreabilidade", icon: QrCode, href: "/rastreabilidade" },
+      { label: "Consulta QR Code", icon: ScanLine, href: "/consulta-qrcode" },
       { label: "Expedição", icon: Truck, href: "/expedicao" },
       { label: "Etiquetas", icon: Tag, href: "/etiquetas" },
     ],
