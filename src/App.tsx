@@ -16,6 +16,7 @@ import Rastreabilidade from "./pages/Rastreabilidade";
 import ConsultaQRCode from "./pages/ConsultaQRCode";
 import Expedicao from "./pages/Expedicao";
 import Etiquetas from "./pages/Etiquetas";
+import Compras from "./pages/Compras";
 import Financeiro from "./pages/Financeiro";
 import Relatorios from "./pages/Relatorios";
 import Usuarios from "./pages/Usuarios";
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/consulta-qrcode" element={<ConsultaQRCode />} />
             <Route path="/expedicao" element={<Expedicao />} />
             <Route path="/etiquetas" element={<Etiquetas />} />
+            <Route path="/compras" element={<Compras />} />
             <Route path="/financeiro" element={<Financeiro />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/usuarios" element={<Usuarios />} />
