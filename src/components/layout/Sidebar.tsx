@@ -22,6 +22,7 @@ import {
   Truck,
   Tag,
   ShoppingCart,
+  Warehouse,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -58,12 +59,13 @@ const navSections: NavSection[] = [
       { label: "Consulta QR Code", icon: ScanLine, href: "/consulta-qrcode" },
       { label: "Expedição", icon: Truck, href: "/expedicao" },
       { label: "Etiquetas", icon: Tag, href: "/etiquetas" },
-      { label: "Compras", icon: ShoppingCart, href: "/compras" },
     ],
   },
   {
     title: "Gestão",
     items: [
+      { label: "Estoque", icon: Warehouse, href: "/estoque" },
+      { label: "Compras", icon: ShoppingCart, href: "/compras" },
       { label: "Financeiro", icon: DollarSign, href: "/financeiro" },
       { label: "Relatórios", icon: BarChart3, href: "/relatorios" },
     ],
