@@ -29,15 +29,23 @@ const Login = () => {
 
     setIsLoading(true);
     
-    // Simulating login - replace with actual auth
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Simulating login - check for admin/admin
+    await new Promise(resolve => setTimeout(resolve, 500));
     
-    toast({
-      title: "Bem-vindo!",
-      description: "Login realizado com sucesso.",
-    });
+    if (username === "admin" && password === "admin") {
+      toast({
+        title: "Bem-vindo!",
+        description: "Login realizado com sucesso.",
+      });
+      navigate("/dashboard");
+    } else {
+      toast({
+        title: "Credenciais inválidas",
+        description: "Usuário ou senha incorretos.",
+        variant: "destructive",
+      });
+    }
     
-    navigate("/dashboard");
     setIsLoading(false);
   };
 
