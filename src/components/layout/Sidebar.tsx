@@ -13,6 +13,13 @@ import {
   Wheat,
   Tractor,
   BarChart3,
+  BookOpen,
+  Grid3X3,
+  Sprout,
+  DollarSign,
+  QrCode,
+  Truck,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -26,8 +33,15 @@ interface NavItem {
 const mainNavItems: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Propriedades", icon: MapPin, href: "/propriedades" },
+  { label: "Talhões", icon: Grid3X3, href: "/talhoes" },
+  { label: "Caderno de Campo", icon: BookOpen, href: "/caderno-de-campo" },
+  { label: "Safras", icon: Sprout, href: "/safras" },
   { label: "Produção", icon: Wheat, href: "/producao" },
+  { label: "Rastreabilidade", icon: QrCode, href: "/rastreabilidade" },
+  { label: "Expedição", icon: Truck, href: "/expedicao" },
+  { label: "Etiquetas", icon: Tag, href: "/etiquetas" },
   { label: "Equipamentos", icon: Tractor, href: "/equipamentos" },
+  { label: "Financeiro", icon: DollarSign, href: "/financeiro" },
   { label: "Relatórios", icon: BarChart3, href: "/relatorios" },
 ];
 
