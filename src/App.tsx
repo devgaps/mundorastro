@@ -29,8 +29,15 @@ const App = () => (
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/propriedades" element={<Propriedades />} />
+            <Route path="/talhoes" element={<ComingSoon />} />
+            <Route path="/caderno-de-campo" element={<ComingSoon />} />
+            <Route path="/safras" element={<ComingSoon />} />
             <Route path="/producao" element={<ComingSoon />} />
+            <Route path="/rastreabilidade" element={<ComingSoon />} />
+            <Route path="/expedicao" element={<ComingSoon />} />
+            <Route path="/etiquetas" element={<ComingSoon />} />
             <Route path="/equipamentos" element={<ComingSoon />} />
+            <Route path="/financeiro" element={<ComingSoon />} />
             <Route path="/relatorios" element={<ComingSoon />} />
             <Route path="/usuarios" element={<ComingSoon />} />
             <Route path="/documentos" element={<ComingSoon />} />
