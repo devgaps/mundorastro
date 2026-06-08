@@ -38,6 +38,7 @@ const App = () => (
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/consulta-qrcode" element={<ConsultaQRCode />} />
           
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -52,7 +53,6 @@ const App = () => (
             <Route path="/safras" element={<Safras />} />
             <Route path="/producao" element={<Producao />} />
             <Route path="/rastreabilidade" element={<Rastreabilidade />} />
-            <Route path="/consulta-qrcode" element={<ConsultaQRCode />} />
             <Route path="/expedicao" element={<Expedicao />} />
             <Route path="/etiquetas" element={<Etiquetas />} />
             <Route path="/estoque" element={<Estoque />} />

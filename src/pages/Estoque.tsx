@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,186 +27,146 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
+import {
+  Plus,
+  Search,
+  Filter,
   Package,
   AlertTriangle,
   TrendingDown,
   TrendingUp,
   Eye,
   Edit,
-  ArrowUpDown
+  ArrowUpDown,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface ItemEstoque {
-  id: string;
-  codigo: string;
-  nome: string;
-  categoria: string;
-  unidade: string;
-  quantidade: number;
-  quantidadeMinima: number;
-  localizacao: string;
-  ultimaMovimentacao: string;
-  valorUnitario: number;
-}
-
-const itensIniciais: ItemEstoque[] = [
-  {
-    id: "1",
-    codigo: "INS-001",
-    nome: "Fertilizante NPK 10-10-10",
-    categoria: "Fertilizantes",
-    unidade: "kg",
-    quantidade: 2500,
-    quantidadeMinima: 500,
-    localizacao: "Galpão A - Prateleira 1",
-    ultimaMovimentacao: "2024-01-20",
-    valorUnitario: 3.50
-  },
-  {
-    id: "2",
-    codigo: "SEM-001",
-    nome: "Semente de Soja - Variedade A",
-    categoria: "Sementes",
-    unidade: "kg",
-    quantidade: 150,
-    quantidadeMinima: 200,
-    localizacao: "Galpão B - Câmara Fria",
-    ultimaMovimentacao: "2024-01-18",
-    valorUnitario: 45.00
-  },
-  {
-    id: "3",
-    codigo: "DEF-001",
-    nome: "Herbicida Glifosato",
-    categoria: "Defensivos",
-    unidade: "L",
-    quantidade: 80,
-    quantidadeMinima: 50,
-    localizacao: "Galpão C - Área Restrita",
-    ultimaMovimentacao: "2024-01-22",
-    valorUnitario: 28.90
-  },
-  {
-    id: "4",
-    codigo: "COM-001",
-    nome: "Diesel S10",
-    categoria: "Combustível",
-    unidade: "L",
-    quantidade: 3200,
-    quantidadeMinima: 1000,
-    localizacao: "Tanque Principal",
-    ultimaMovimentacao: "2024-01-25",
-    valorUnitario: 5.89
-  },
-  {
-    id: "5",
-    codigo: "PEC-001",
-    nome: "Óleo Lubrificante 15W40",
-    categoria: "Peças",
-    unidade: "L",
-    quantidade: 25,
-    quantidadeMinima: 30,
-    localizacao: "Oficina - Estante 2",
-    ultimaMovimentacao: "2024-01-15",
-    valorUnitario: 32.00
-  },
-  {
-    id: "6",
-    codigo: "EMB-001",
-    nome: "Sacaria 60kg",
-    categoria: "Embalagens",
-    unidade: "un",
-    quantidade: 5000,
-    quantidadeMinima: 1000,
-    localizacao: "Galpão A - Prateleira 5",
-    ultimaMovimentacao: "2024-01-19",
-    valorUnitario: 2.50
-  },
-];
+import {
+  createItemEstoque,
+  listEstoque,
+  type CreateItemEstoqueInput,
+  type ItemEstoque,
+} from "@/services/estoque";
 
 const categorias = ["Fertilizantes", "Sementes", "Defensivos", "Combustível", "Peças", "Embalagens", "Outros"];
 const unidades = ["kg", "L", "un", "m", "cx"];
 
+const emptyForm = {
+  nome: "",
+  categoria: "",
+  unidade: "",
+  quantidade: "",
+  quantidadeMinima: "",
+  localizacao: "",
+  valorUnitario: "",
+};
+
+const buildPayload = (form: typeof emptyForm, totalItens: number): CreateItemEstoqueInput => ({
+  codigo: `ITM-${String(totalItens + 1).padStart(3, "0")}`,
+  nome: form.nome.trim(),
+  categoria: form.categoria || null,
+  unidade: form.unidade || null,
+  quantidade: form.quantidade ? Number(form.quantidade) : 0,
+  quantidade_minima: form.quantidadeMinima ? Number(form.quantidadeMinima) : 0,
+  localizacao: form.localizacao.trim() || null,
+  valor_unitario: form.valorUnitario ? Number(form.valorUnitario) : 0,
+  ultima_movimentacao: new Date().toISOString().slice(0, 10),
+});
+
+const getStatusEstoque = (item: ItemEstoque) => {
+  const quantidade = item.quantidade ?? 0;
+  const minima = item.quantidade_minima ?? 0;
+  const percentual = minima > 0 ? (quantidade / minima) * 100 : 999;
+
+  if (percentual <= 50) return { status: "critico", label: "Crítico", variant: "destructive" as const };
+  if (percentual <= 100) return { status: "baixo", label: "Baixo", variant: "secondary" as const };
+  return { status: "ok", label: "Normal", variant: "outline" as const };
+};
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+};
+
 const Estoque = () => {
-  const [itens, setItens] = useState<ItemEstoque[]>(itensIniciais);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [novoItem, setNovoItem] = useState(emptyForm);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [novoItem, setNovoItem] = useState({
-    nome: "",
-    categoria: "",
-    unidade: "",
-    quantidade: "",
-    quantidadeMinima: "",
-    localizacao: "",
-    valorUnitario: ""
+  const {
+    data: itens = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["estoque"],
+    queryFn: listEstoque,
   });
 
-  const filteredItens = itens.filter(item => {
-    const matchesSearch = 
-      item.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.nome.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategoria = categoriaFilter === "todos" || item.categoria === categoriaFilter;
-    return matchesSearch && matchesCategoria;
+  const createMutation = useMutation({
+    mutationFn: createItemEstoque,
+    onSuccess: (newItem) => {
+      queryClient.invalidateQueries({ queryKey: ["estoque"] });
+      setDialogOpen(false);
+      setNovoItem(emptyForm);
+      toast({
+        title: "Item adicionado",
+        description: `${newItem.nome} foi adicionado ao estoque.`,
+      });
+    },
+    onError: (mutationError) => {
+      toast({
+        title: "Erro ao adicionar",
+        description:
+          mutationError instanceof Error
+            ? mutationError.message
+            : "Não foi possível salvar o item.",
+        variant: "destructive",
+      });
+    },
   });
 
-  const getStatusEstoque = (item: ItemEstoque) => {
-    const percentual = (item.quantidade / item.quantidadeMinima) * 100;
-    if (percentual <= 50) return { status: "critico", label: "Crítico", variant: "destructive" as const };
-    if (percentual <= 100) return { status: "baixo", label: "Baixo", variant: "secondary" as const };
-    return { status: "ok", label: "Normal", variant: "outline" as const };
-  };
+  const filteredItens = useMemo(() => {
+    const query = searchTerm.toLowerCase();
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newItem: ItemEstoque = {
-      id: String(itens.length + 1),
-      codigo: `ITM-${String(itens.length + 1).padStart(3, '0')}`,
-      nome: novoItem.nome,
-      categoria: novoItem.categoria,
-      unidade: novoItem.unidade,
-      quantidade: parseFloat(novoItem.quantidade) || 0,
-      quantidadeMinima: parseFloat(novoItem.quantidadeMinima) || 0,
-      localizacao: novoItem.localizacao,
-      ultimaMovimentacao: new Date().toISOString().split('T')[0],
-      valorUnitario: parseFloat(novoItem.valorUnitario) || 0
-    };
-
-    setItens([...itens, newItem]);
-    setDialogOpen(false);
-    setNovoItem({ nome: "", categoria: "", unidade: "", quantidade: "", quantidadeMinima: "", localizacao: "", valorUnitario: "" });
-    
-    toast({
-      title: "Item adicionado",
-      description: `${newItem.nome} foi adicionado ao estoque.`,
+    return itens.filter((item) => {
+      const searchable = [item.codigo, item.nome, item.localizacao]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesSearch = searchable.includes(query);
+      const matchesCategoria = categoriaFilter === "todos" || item.categoria === categoriaFilter;
+      return matchesSearch && matchesCategoria;
     });
-  };
+  }, [categoriaFilter, itens, searchTerm]);
 
-  // Estatísticas
   const totalItens = itens.length;
-  const valorTotalEstoque = itens.reduce((acc, item) => acc + (item.quantidade * item.valorUnitario), 0);
-  const itensCriticos = itens.filter(item => getStatusEstoque(item).status === "critico").length;
-  const itensBaixos = itens.filter(item => getStatusEstoque(item).status === "baixo").length;
+  const valorTotalEstoque = itens.reduce(
+    (acc, item) => acc + ((item.quantidade ?? 0) * (item.valor_unitario ?? 0)),
+    0
+  );
+  const itensCriticos = itens.filter((item) => getStatusEstoque(item).status === "critico").length;
+  const itensBaixos = itens.filter((item) => getStatusEstoque(item).status === "baixo").length;
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!novoItem.nome.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Informe o nome do item para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createMutation.mutate(buildPayload(novoItem, totalItens));
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Estoque</h1>
@@ -229,7 +190,7 @@ const Estoque = () => {
                   id="nome"
                   placeholder="Ex: Fertilizante NPK"
                   value={novoItem.nome}
-                  onChange={(e) => setNovoItem({ ...novoItem, nome: e.target.value })}
+                  onChange={(event) => setNovoItem({ ...novoItem, nome: event.target.value })}
                   required
                 />
               </div>
@@ -275,8 +236,7 @@ const Estoque = () => {
                     type="number"
                     placeholder="0"
                     value={novoItem.quantidade}
-                    onChange={(e) => setNovoItem({ ...novoItem, quantidade: e.target.value })}
-                    required
+                    onChange={(event) => setNovoItem({ ...novoItem, quantidade: event.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -286,8 +246,7 @@ const Estoque = () => {
                     type="number"
                     placeholder="0"
                     value={novoItem.quantidadeMinima}
-                    onChange={(e) => setNovoItem({ ...novoItem, quantidadeMinima: e.target.value })}
-                    required
+                    onChange={(event) => setNovoItem({ ...novoItem, quantidadeMinima: event.target.value })}
                   />
                 </div>
               </div>
@@ -299,8 +258,7 @@ const Estoque = () => {
                   step="0.01"
                   placeholder="0,00"
                   value={novoItem.valorUnitario}
-                  onChange={(e) => setNovoItem({ ...novoItem, valorUnitario: e.target.value })}
-                  required
+                  onChange={(event) => setNovoItem({ ...novoItem, valorUnitario: event.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -309,21 +267,22 @@ const Estoque = () => {
                   id="localizacao"
                   placeholder="Ex: Galpão A - Prateleira 1"
                   value={novoItem.localizacao}
-                  onChange={(e) => setNovoItem({ ...novoItem, localizacao: e.target.value })}
+                  onChange={(event) => setNovoItem({ ...novoItem, localizacao: event.target.value })}
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit">Adicionar</Button>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Salvando..." : "Adicionar"}
+                </Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -363,7 +322,6 @@ const Estoque = () => {
         </Card>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -372,29 +330,26 @@ const Estoque = () => {
               <Input
                 placeholder="Buscar por código ou nome..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="pl-9"
               />
             </div>
-            <div className="flex gap-2">
-              <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-                <SelectTrigger className="w-[160px]">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todas</SelectItem>
-                  {categorias.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+              <SelectTrigger className="w-[160px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todas</SelectItem>
+                {categorias.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -411,7 +366,20 @@ const Estoque = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredItens.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+                    Carregando itens...
+                  </TableCell>
+                </TableRow>
+              ) : isError ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-destructive">
+                    {error instanceof Error ? error.message : "Não foi possível carregar o estoque."}
+                  </TableCell>
+                </TableRow>
+              ) : filteredItens.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Nenhum item encontrado
@@ -420,22 +388,25 @@ const Estoque = () => {
               ) : (
                 filteredItens.map((item) => {
                   const statusInfo = getStatusEstoque(item);
+                  const quantidade = item.quantidade ?? 0;
+                  const valorUnitario = item.valor_unitario ?? 0;
+
                   return (
                     <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.codigo}</TableCell>
+                      <TableCell className="font-medium">{item.codigo || "-"}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{item.nome}</p>
-                          <p className="text-xs text-muted-foreground">{item.localizacao}</p>
+                          <p className="text-xs text-muted-foreground">{item.localizacao || "-"}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{item.categoria}</TableCell>
+                      <TableCell>{item.categoria || "-"}</TableCell>
                       <TableCell className="text-right">
-                        {item.quantidade} {item.unidade}
+                        {quantidade} {item.unidade || ""}
                       </TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.valorUnitario)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(valorUnitario)}</TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(item.quantidade * item.valorUnitario)}
+                        {formatCurrency(quantidade * valorUnitario)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>

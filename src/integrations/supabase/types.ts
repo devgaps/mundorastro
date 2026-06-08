@@ -125,6 +125,219 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes: {
+        Row: {
+          chave: string
+          created_at: string
+          escopo: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          valor: Json
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          escopo?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          valor?: Json
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          escopo?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          valor?: Json
+        }
+        Relationships: []
+      }
+      documentos: {
+        Row: {
+          created_at: string
+          formato: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          propriedade_id: string | null
+          status: string | null
+          storage_bucket: string | null
+          storage_path: string | null
+          tamanho_bytes: number | null
+          tipo: string | null
+          updated_at: string
+          url: string | null
+          user_id: string
+          validade: string | null
+        }
+        Insert: {
+          created_at?: string
+          formato?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          propriedade_id?: string | null
+          status?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          tamanho_bytes?: number | null
+          tipo?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          validade?: string | null
+        }
+        Update: {
+          created_at?: string
+          formato?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          propriedade_id?: string | null
+          status?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          tamanho_bytes?: number | null
+          tipo?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          validade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipamentos: {
+        Row: {
+          ano: number | null
+          created_at: string
+          horas_uso: number | null
+          id: string
+          identificacao: string | null
+          marca: string | null
+          modelo: string | null
+          nome: string
+          observacoes: string | null
+          proxima_manutencao: string | null
+          propriedade_id: string | null
+          quilometragem: number | null
+          status: string | null
+          tipo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ano?: number | null
+          created_at?: string
+          horas_uso?: number | null
+          id?: string
+          identificacao?: string | null
+          marca?: string | null
+          modelo?: string | null
+          nome: string
+          observacoes?: string | null
+          proxima_manutencao?: string | null
+          propriedade_id?: string | null
+          quilometragem?: number | null
+          status?: string | null
+          tipo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ano?: number | null
+          created_at?: string
+          horas_uso?: number | null
+          id?: string
+          identificacao?: string | null
+          marca?: string | null
+          modelo?: string | null
+          nome?: string
+          observacoes?: string | null
+          proxima_manutencao?: string | null
+          propriedade_id?: string | null
+          quilometragem?: number | null
+          status?: string | null
+          tipo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipamentos_propriedade_id_fkey"
+            columns: ["propriedade_id"]
+            isOneToOne: false
+            referencedRelation: "propriedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      etiquetas: {
+        Row: {
+          codigo: string
+          conteudo: string | null
+          created_at: string
+          id: string
+          impressoes: number | null
+          lote_id: string | null
+          produto: string | null
+          quantidade: number | null
+          status: string | null
+          tipo: string | null
+          unidade: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          codigo: string
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          impressoes?: number | null
+          lote_id?: string | null
+          produto?: string | null
+          quantidade?: number | null
+          status?: string | null
+          tipo?: string | null
+          unidade?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          codigo?: string
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          impressoes?: number | null
+          lote_id?: string | null
+          produto?: string | null
+          quantidade?: number | null
+          status?: string | null
+          tipo?: string | null
+          unidade?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etiquetas_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_rastreabilidade"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque: {
         Row: {
           categoria: string | null

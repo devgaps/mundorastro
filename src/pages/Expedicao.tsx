@@ -1,112 +1,137 @@
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { createExpedicao, listExpedicoes } from "@/services/expedicao";
+import { listLotesRastreabilidade } from "@/services/rastreabilidade";
+import {
   Truck,
   Plus,
-  Filter,
   Search,
   Calendar,
   MapPin,
   Package,
-  Clock,
-  User,
+  Building2,
 } from "lucide-react";
 
-const mockExpedicoes = [
-  {
-    id: "1",
-    numero: "EXP-2024-001",
-    data: "2024-01-12",
-    destino: "Porto de Santos, SP",
-    transportadora: "TransAgro Ltda",
-    motorista: "José Carlos",
-    placa: "ABC-1234",
-    lotes: ["LOT-2024-001", "LOT-2024-005"],
-    pesoTotal: 306.2,
-    previsaoChegada: "2024-01-14",
-    status: "em trânsito",
-  },
-  {
-    id: "2",
-    numero: "EXP-2024-002",
-    data: "2024-01-11",
-    destino: "Cooperativa Central, Uberlândia",
-    transportadora: "Rápido Agrícola",
-    motorista: "Marcos Silva",
-    placa: "DEF-5678",
-    lotes: ["LOT-2024-002"],
-    pesoTotal: 210.0,
-    previsaoChegada: "2024-01-11",
-    status: "entregue",
-  },
-  {
-    id: "3",
-    numero: "EXP-2024-003",
-    data: "2024-01-13",
-    destino: "Indústria Têxtil, São Paulo",
-    transportadora: "LogAgro Express",
-    motorista: "Ricardo Oliveira",
-    placa: "GHI-9012",
-    lotes: ["LOT-2024-004"],
-    pesoTotal: 45.2,
-    previsaoChegada: "2024-01-15",
-    status: "aguardando",
-  },
-  {
-    id: "4",
-    numero: "EXP-2024-004",
-    data: "2024-01-10",
-    destino: "Porto de Paranaguá, PR",
-    transportadora: "TransAgro Ltda",
-    motorista: "Fernando Costa",
-    placa: "JKL-3456",
-    lotes: ["LOT-2024-003"],
-    pesoTotal: 19.2,
-    previsaoChegada: "2024-01-12",
-    status: "entregue",
-  },
-  {
-    id: "5",
-    numero: "EXP-2024-005",
-    data: "2024-01-14",
-    destino: "Armazém Regional, Goiânia",
-    transportadora: "Rápido Agrícola",
-    motorista: "Paulo Souza",
-    placa: "MNO-7890",
-    lotes: ["LOT-2024-006"],
-    pesoTotal: 98.3,
-    previsaoChegada: "2024-01-14",
-    status: "carregando",
-  },
-  {
-    id: "6",
-    numero: "EXP-2024-006",
-    data: "2024-01-15",
-    destino: "Terminal Grãos, Rondonópolis",
-    transportadora: "LogAgro Express",
-    motorista: "Anderson Lima",
-    placa: "PQR-1234",
-    lotes: [],
-    pesoTotal: 0,
-    previsaoChegada: "2024-01-16",
-    status: "agendado",
-  },
-];
-
 const statusColors: Record<string, string> = {
+  agendado: "bg-purple-500/10 text-purple-600 border-purple-500/20",
   "em trânsito": "bg-blue-500/10 text-blue-600 border-blue-500/20",
   entregue: "bg-green-500/10 text-green-600 border-green-500/20",
-  aguardando: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
-  carregando: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  agendado: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  cancelado: "bg-red-500/10 text-red-600 border-red-500/20",
+};
+
+const initialForm = {
+  lote_id: "",
+  cliente: "",
+  destino: "",
+  transportadora: "",
+  data_expedicao: new Date().toISOString().slice(0, 10),
+  quantidade: "",
+  unidade: "toneladas",
+  status: "agendado",
+  observacoes: "",
 };
 
 const Expedicao = () => {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(initialForm);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: expedicoes = [], isLoading, isError } = useQuery({
+    queryKey: ["expedicoes"],
+    queryFn: listExpedicoes,
+  });
+
+  const { data: lotes = [] } = useQuery({
+    queryKey: ["lotes-rastreabilidade"],
+    queryFn: listLotesRastreabilidade,
+  });
+
+  const mutation = useMutation({
+    mutationFn: createExpedicao,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expedicoes"] });
+      setOpen(false);
+      setForm(initialForm);
+      toast({
+        title: "Expedição cadastrada",
+        description: "O envio foi salvo e já está disponível na lista.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao cadastrar expedição",
+        description: error instanceof Error ? error.message : "Tente novamente em instantes.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredExpedicoes = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return expedicoes;
+
+    return expedicoes.filter((expedicao) =>
+      [
+        expedicao.numero,
+        expedicao.cliente,
+        expedicao.destino,
+        expedicao.transportadora,
+        expedicao.status,
+        expedicao.lotes_rastreabilidade?.codigo,
+        expedicao.lotes_rastreabilidade?.produto,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(term)),
+    );
+  }, [expedicoes, search]);
+
+  const nextNumero = useMemo(() => {
+    const year = new Date().getFullYear();
+    return `EXP-${year}-${String(expedicoes.length + 1).padStart(3, "0")}`;
+  }, [expedicoes.length]);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    mutation.mutate({
+      numero: nextNumero,
+      lote_id: form.lote_id || null,
+      cliente: form.cliente,
+      destino: form.destino,
+      transportadora: form.transportadora || null,
+      data_expedicao: form.data_expedicao,
+      quantidade: form.quantidade ? Number(form.quantidade) : null,
+      unidade: form.unidade || null,
+      status: form.status,
+      observacoes: form.observacoes || null,
+    });
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-8">
-      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
@@ -116,75 +141,245 @@ const Expedicao = () => {
             Gerencie o envio e transporte de produtos
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Filter className="h-4 w-4" />
-            Filtros
-          </Button>
-          <Button variant="hero" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Expedição
-          </Button>
-        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="hero" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Expedição
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Nova expedição</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Número</Label>
+                  <Input value={nextNumero} disabled />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data de expedição</Label>
+                  <Input
+                    type="date"
+                    value={form.data_expedicao}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, data_expedicao: event.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lote rastreável</Label>
+                  <Select
+                    value={form.lote_id}
+                    onValueChange={(value) => setForm((current) => ({ ...current, lote_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um lote" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lotes.map((lote) => (
+                        <SelectItem key={lote.id} value={lote.id}>
+                          {lote.codigo} - {lote.produto}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Cliente</Label>
+                  <Input
+                    value={form.cliente}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, cliente: event.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Destino</Label>
+                  <Input
+                    value={form.destino}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, destino: event.target.value }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Transportadora</Label>
+                  <Input
+                    value={form.transportadora}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, transportadora: event.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Quantidade</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.quantidade}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, quantidade: event.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unidade</Label>
+                  <Select
+                    value={form.unidade}
+                    onValueChange={(value) => setForm((current) => ({ ...current, unidade: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kg">kg</SelectItem>
+                      <SelectItem value="toneladas">toneladas</SelectItem>
+                      <SelectItem value="sacas">sacas</SelectItem>
+                      <SelectItem value="unidades">unidades</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(value) => setForm((current) => ({ ...current, status: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="agendado">Agendado</SelectItem>
+                      <SelectItem value="em trânsito">Em trânsito</SelectItem>
+                      <SelectItem value="entregue">Entregue</SelectItem>
+                      <SelectItem value="cancelado">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Observações</Label>
+                <Textarea
+                  value={form.observacoes}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, observacoes: event.target.value }))
+                  }
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? "Salvando..." : "Salvar expedição"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Buscar expedição..." className="pl-9 h-10" />
+        <Input
+          placeholder="Buscar expedição..."
+          className="pl-9 h-10"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
       </div>
 
-      {/* Grid */}
+      {isLoading && (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            Carregando expedições...
+          </CardContent>
+        </Card>
+      )}
+
+      {isError && (
+        <Card className="border-destructive/30">
+          <CardContent className="p-8 text-center text-destructive">
+            Não foi possível carregar as expedições.
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && !isError && filteredExpedicoes.length === 0 && (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            Nenhuma expedição encontrada.
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        {mockExpedicoes.map((exp) => (
-          <Card key={exp.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+        {filteredExpedicoes.map((expedicao) => (
+          <Card key={expedicao.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10">
                     <Truck className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-mono">{exp.numero}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{exp.transportadora}</p>
+                    <CardTitle className="text-lg font-mono">
+                      {expedicao.numero || "Sem número"}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {expedicao.transportadora || "Transportadora não informada"}
+                    </p>
                   </div>
                 </div>
-                <Badge className={statusColors[exp.status]} variant="outline">
-                  {exp.status}
+                <Badge
+                  className={statusColors[expedicao.status || ""] || "bg-muted text-muted-foreground"}
+                  variant="outline"
+                >
+                  {expedicao.status || "sem status"}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <span>{new Date(exp.data).toLocaleDateString('pt-BR')}</span>
+                <span>{new Date(expedicao.data_expedicao).toLocaleDateString("pt-BR")}</span>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>{exp.destino}</span>
+                <span>{expedicao.destino || "Destino não informado"}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span>{exp.motorista}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-mono bg-muted px-2 py-0.5 rounded">{exp.placa}</span>
-                </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Building2 className="h-4 w-4" />
+                <span>{expedicao.cliente || "Cliente não informado"}</span>
               </div>
 
-              <div className="pt-2 border-t flex items-center justify-between">
+              <div className="pt-2 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Package className="h-4 w-4 text-muted-foreground" />
-                  <span>{exp.lotes.length} lote(s) • {exp.pesoTotal} ton</span>
+                  <span>
+                    {expedicao.lotes_rastreabilidade?.codigo || "Sem lote"} 
+                    {expedicao.lotes_rastreabilidade?.produto
+                      ? ` - ${expedicao.lotes_rastreabilidade.produto}`
+                      : ""}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{new Date(exp.previsaoChegada).toLocaleDateString('pt-BR')}</span>
-                </div>
+                <span className="text-sm text-muted-foreground">
+                  {expedicao.quantidade ?? 0} {expedicao.unidade || ""}
+                </span>
               </div>
+              {expedicao.observacoes && (
+                <p className="text-sm text-muted-foreground border-t pt-3">
+                  {expedicao.observacoes}
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -25,11 +25,12 @@ import {
   Warehouse,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, type ElementType } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavItem {
   label: string;
-  icon: React.ElementType;
+  icon: ElementType;
   href: string;
 }
 
@@ -84,9 +85,10 @@ export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/login");
   };
 
