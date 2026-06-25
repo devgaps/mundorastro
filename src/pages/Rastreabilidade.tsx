@@ -1,5 +1,6 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,9 @@ import {
   Package,
   ArrowRight,
   Loader2,
+  Copy,
+  Download,
+  ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { listPropriedades } from "@/services/propriedades";
@@ -91,6 +95,11 @@ const getStatusLabel = (status: string | null) => {
   return statusLabels[status ?? "ativo"] ?? statusLabels.ativo;
 };
 
+const getQrCodeUrl = (lote: LoteRastreabilidadeComRelacionamentos) => {
+  if (lote.qr_code) return lote.qr_code;
+  return `${window.location.origin}/consulta-qrcode?codigo=${encodeURIComponent(lote.codigo)}`;
+};
+
 const matchesSearch = (lote: LoteRastreabilidadeComRelacionamentos, query: string) => {
   const searchable = [
     lote.codigo,
@@ -105,6 +114,100 @@ const matchesSearch = (lote: LoteRastreabilidadeComRelacionamentos, query: strin
     .toLowerCase();
 
   return searchable.includes(query);
+};
+
+const QrCodePreview = ({ lote }: { lote: LoteRastreabilidadeComRelacionamentos }) => {
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const { toast } = useToast();
+  const qrUrl = getQrCodeUrl(lote);
+
+  useEffect(() => {
+    let active = true;
+
+    QRCode.toDataURL(qrUrl, {
+      errorCorrectionLevel: "M",
+      margin: 2,
+      scale: 6,
+      color: {
+        dark: "#0f172a",
+        light: "#ffffff",
+      },
+    })
+      .then((dataUrl) => {
+        if (active) setQrDataUrl(dataUrl);
+      })
+      .catch(() => {
+        if (active) setQrDataUrl("");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [qrUrl]);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(qrUrl);
+    toast({
+      title: "Link copiado",
+      description: "O link público do QR Code foi copiado.",
+    });
+  };
+
+  const handleDownload = () => {
+    if (!qrDataUrl) return;
+
+    const link = document.createElement("a");
+    link.href = qrDataUrl;
+    link.download = `${lote.codigo}-qrcode.png`;
+    link.click();
+  };
+
+  return (
+    <div className="pt-3 border-t">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="w-28 h-28 rounded-md border bg-white p-2 flex items-center justify-center shrink-0">
+          {qrDataUrl ? (
+            <img
+              src={qrDataUrl}
+              alt={`QR Code do lote ${lote.codigo}`}
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <QrCode className="h-10 w-10 text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0 space-y-3">
+          <div>
+            <p className="text-sm font-medium">QR Code de consulta</p>
+            <p className="text-xs text-muted-foreground truncate">{qrUrl}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" className="gap-1" onClick={handleCopy}>
+              <Copy className="h-4 w-4" />
+              Copiar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={handleDownload}
+              disabled={!qrDataUrl}
+            >
+              <Download className="h-4 w-4" />
+              PNG
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="gap-1" asChild>
+              <a href={qrUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                Abrir
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Rastreabilidade = () => {
@@ -293,11 +396,7 @@ const Rastreabilidade = () => {
                   </span>
                 </div>
 
-                {lote.qr_code && (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-muted-foreground truncate">{lote.qr_code}</p>
-                  </div>
-                )}
+                <QrCodePreview lote={lote} />
               </CardContent>
             </Card>
           ))}
