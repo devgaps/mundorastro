@@ -8,7 +8,6 @@ import { Logo } from "@/components/Logo";
 import { Eye, EyeOff, LogIn, Loader2, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
@@ -71,16 +70,22 @@ const Login = () => {
 
   const handleGoogle = async () => {
     setIsLoading(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/dashboard`,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
     });
-    if (result.error) {
+
+    if (error) {
+      toast({ title: "Erro ao entrar com Google", description: error.message, variant: "destructive" });
       setIsLoading(false);
-      toast({ title: "Erro ao entrar com Google", description: String(result.error), variant: "destructive" });
       return;
     }
-    if (result.redirected) return;
-    navigate("/dashboard");
   };
 
   return (
