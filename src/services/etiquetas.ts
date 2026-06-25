@@ -14,13 +14,28 @@ export type EtiquetaComLote = Etiqueta & {
   } | null;
 };
 
+const normalizeEtiquetaError = (error: unknown) => {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: string }).code === "PGRST205"
+  ) {
+    return new Error(
+      "A tabela de etiquetas ainda não foi criada no Supabase. Aplique a migration 20260605190000_add_operational_storage_tables.sql no projeto remoto.",
+    );
+  }
+
+  return error;
+};
+
 export const listEtiquetas = async () => {
   const { data, error } = await supabase
     .from("etiquetas")
     .select("*, lotes_rastreabilidade(codigo, produto)")
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) throw normalizeEtiquetaError(error);
 
   return (data ?? []) as EtiquetaComLote[];
 };
@@ -40,7 +55,7 @@ export const createEtiqueta = async (input: CreateEtiquetaInput) => {
     .select("*, lotes_rastreabilidade(codigo, produto)")
     .single();
 
-  if (error) throw error;
+  if (error) throw normalizeEtiquetaError(error);
 
   return data as EtiquetaComLote;
 };

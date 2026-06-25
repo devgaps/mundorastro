@@ -23,13 +23,28 @@ const normalizeFileName = (name: string) =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
+const normalizeDocumentoError = (error: unknown) => {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: string }).code === "PGRST205"
+  ) {
+    return new Error(
+      "A tabela de documentos ainda não foi criada no Supabase. Aplique a migration 20260605190000_add_operational_storage_tables.sql no projeto remoto.",
+    );
+  }
+
+  return error;
+};
+
 export const listDocumentos = async () => {
   const { data, error } = await supabase
     .from("documentos")
     .select("*, propriedades(nome)")
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) throw normalizeDocumentoError(error);
 
   return (data ?? []) as DocumentoComPropriedade[];
 };
@@ -57,7 +72,7 @@ export const createDocumento = async (input: CreateDocumentoInput, file?: File |
       .from(DOCUMENTOS_BUCKET)
       .upload(storagePath, file, { upsert: false });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) throw normalizeDocumentoError(uploadError);
   }
 
   const { data, error } = await supabase
@@ -73,7 +88,7 @@ export const createDocumento = async (input: CreateDocumentoInput, file?: File |
     .select("*, propriedades(nome)")
     .single();
 
-  if (error) throw error;
+  if (error) throw normalizeDocumentoError(error);
 
   return data as DocumentoComPropriedade;
 };
@@ -86,7 +101,7 @@ export const getDocumentoUrl = async (documento: Documento) => {
     .from(documento.storage_bucket || DOCUMENTOS_BUCKET)
     .createSignedUrl(documento.storage_path, 60);
 
-  if (error) throw error;
+  if (error) throw normalizeDocumentoError(error);
 
   return data.signedUrl;
 };

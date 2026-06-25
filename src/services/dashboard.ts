@@ -7,8 +7,17 @@ const startOfMonth = () => {
   return date.toISOString().slice(0, 10);
 };
 
+const isMissingTableError = (error: unknown) =>
+  Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: string }).code === "PGRST205",
+  );
+
 const getCount = async (table: Parameters<typeof supabase.from>[0]) => {
   const { count, error } = await supabase.from(table).select("*", { count: "exact", head: true });
+  if (isMissingTableError(error)) return 0;
   if (error) throw error;
   return count ?? 0;
 };

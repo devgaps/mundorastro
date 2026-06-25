@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AuthProvider } from "@/hooks/useAuth";
+import { useEffect } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Propriedades from "./pages/Propriedades";
@@ -28,49 +29,56 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/consulta-qrcode" element={<ConsultaQRCode />} />
-          
-          {/* Redirect root to login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          
-          {/* Protected routes with sidebar layout */}
-          <Route element={<DashboardLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/propriedades" element={<Propriedades />} />
-            <Route path="/talhoes" element={<Talhoes />} />
-            <Route path="/equipamentos" element={<Equipamentos />} />
-            <Route path="/caderno-de-campo" element={<CadernoDeCampo />} />
-            <Route path="/safras" element={<Safras />} />
-            <Route path="/producao" element={<Producao />} />
-            <Route path="/rastreabilidade" element={<Rastreabilidade />} />
-            <Route path="/expedicao" element={<Expedicao />} />
-            <Route path="/etiquetas" element={<Etiquetas />} />
-            <Route path="/estoque" element={<Estoque />} />
-            <Route path="/compras" element={<Compras />} />
-            <Route path="/financeiro" element={<Financeiro />} />
-            <Route path="/relatorios" element={<Relatorios />} />
-            <Route path="/usuarios" element={<Usuarios />} />
-            <Route path="/documentos" element={<Documentos />} />
-            <Route path="/configuracoes" element={<Configuracoes />} />
-          </Route>
-          
-          {/* Catch all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    const theme = window.localStorage.getItem("mundorastro:theme");
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/consulta-qrcode" element={<ConsultaQRCode />} />
+            
+            {/* Redirect root to login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            
+            {/* Protected routes with sidebar layout */}
+            <Route element={<DashboardLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/propriedades" element={<Propriedades />} />
+              <Route path="/talhoes" element={<Talhoes />} />
+              <Route path="/equipamentos" element={<Equipamentos />} />
+              <Route path="/caderno-de-campo" element={<CadernoDeCampo />} />
+              <Route path="/safras" element={<Safras />} />
+              <Route path="/producao" element={<Producao />} />
+              <Route path="/rastreabilidade" element={<Rastreabilidade />} />
+              <Route path="/expedicao" element={<Expedicao />} />
+              <Route path="/etiquetas" element={<Etiquetas />} />
+              <Route path="/estoque" element={<Estoque />} />
+              <Route path="/compras" element={<Compras />} />
+              <Route path="/financeiro" element={<Financeiro />} />
+              <Route path="/relatorios" element={<Relatorios />} />
+              <Route path="/usuarios" element={<Usuarios />} />
+              <Route path="/documentos" element={<Documentos />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+            </Route>
+            
+            {/* Catch all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

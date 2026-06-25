@@ -31,6 +31,8 @@ import {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
+const THEME_STORAGE_KEY = "mundorastro:theme";
+
 const Configuracoes = () => {
   const [empresa, setEmpresa] = useState<EmpresaConfig>(defaultEmpresaConfig);
   const [preferencias, setPreferencias] = useState<PreferenciasConfig>(defaultPreferenciasConfig);
@@ -52,17 +54,28 @@ const Configuracoes = () => {
     const empresaValor = configByKey.get("empresa");
     const preferenciasValor = configByKey.get("preferencias");
     const integracoesValor = configByKey.get("integracoes");
+    const localTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
 
     if (isRecord(empresaValor)) {
       setEmpresa({ ...defaultEmpresaConfig, ...empresaValor } as EmpresaConfig);
     }
     if (isRecord(preferenciasValor)) {
       setPreferencias({ ...defaultPreferenciasConfig, ...preferenciasValor } as PreferenciasConfig);
+    } else if (localTheme) {
+      setPreferencias((current) => ({
+        ...current,
+        modoEscuro: localTheme === "dark",
+      }));
     }
     if (isRecord(integracoesValor)) {
       setIntegracoes({ ...defaultIntegracoesConfig, ...integracoesValor } as IntegracoesConfig);
     }
   }, [configByKey]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", preferencias.modoEscuro);
+    window.localStorage.setItem(THEME_STORAGE_KEY, preferencias.modoEscuro ? "dark" : "light");
+  }, [preferencias.modoEscuro]);
 
   const mutation = useMutation({
     mutationFn: async () => {

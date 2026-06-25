@@ -3,6 +3,8 @@ import type { Database, Json } from "@/integrations/supabase/types";
 
 export type Configuracao = Database["public"]["Tables"]["configuracoes"]["Row"];
 
+const LOCAL_CONFIG_KEY = "mundorastro:configuracoes";
+
 export type EmpresaConfig = {
   nome: string;
   cnpj: string;
@@ -63,12 +65,46 @@ const getCurrentUserId = async () => {
   return user.id;
 };
 
+const isMissingConfiguracoesTable = (error: unknown) =>
+  Boolean(
+    error &&
+      typeof error === "object" &&
+      "code" in error &&
+      (error as { code?: string }).code === "PGRST205",
+  );
+
+const readLocalConfiguracoes = () => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(LOCAL_CONFIG_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as Configuracao[];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalConfiguracao = (configuracao: Configuracao) => {
+  if (typeof window === "undefined") return configuracao;
+
+  const current = readLocalConfiguracoes();
+  const next = [
+    ...current.filter((item) => item.chave !== configuracao.chave),
+    configuracao,
+  ].sort((a, b) => a.chave.localeCompare(b.chave));
+
+  window.localStorage.setItem(LOCAL_CONFIG_KEY, JSON.stringify(next));
+  return configuracao;
+};
+
 export const listConfiguracoes = async () => {
   const { data, error } = await supabase
     .from("configuracoes")
     .select("*")
     .order("chave", { ascending: true });
 
+  if (isMissingConfiguracoesTable(error)) return readLocalConfiguracoes();
   if (error) throw error;
 
   return data ?? [];
@@ -90,6 +126,18 @@ export const saveConfiguracao = async (chave: string, valor: Json, escopo = "usu
     )
     .select()
     .single();
+
+  if (isMissingConfiguracoesTable(error)) {
+    return writeLocalConfiguracao({
+      id: `local-${userId}-${chave}`,
+      user_id: userId,
+      chave,
+      valor,
+      escopo,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
 
   if (error) throw error;
 
