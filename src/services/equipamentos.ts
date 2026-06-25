@@ -13,13 +13,28 @@ export type EquipamentoComPropriedade = Equipamento & {
   } | null;
 };
 
+const normalizeEquipamentoError = (error: unknown) => {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: string }).code === "PGRST205"
+  ) {
+    return new Error(
+      "A tabela de equipamentos ainda não foi criada no Supabase. Aplique a migration 20260605190000_add_operational_storage_tables.sql no projeto remoto.",
+    );
+  }
+
+  return error;
+};
+
 export const listEquipamentos = async () => {
   const { data, error } = await supabase
     .from("equipamentos")
     .select("*, propriedades(nome)")
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
+  if (error) throw normalizeEquipamentoError(error);
 
   return (data ?? []) as EquipamentoComPropriedade[];
 };
@@ -39,7 +54,7 @@ export const createEquipamento = async (input: CreateEquipamentoInput) => {
     .select("*, propriedades(nome)")
     .single();
 
-  if (error) throw error;
+  if (error) throw normalizeEquipamentoError(error);
 
   return data as EquipamentoComPropriedade;
 };
