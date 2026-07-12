@@ -10,6 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+const getAuthRedirectUrl = () => {
+  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  return `${appUrl.replace(/\/$/, "")}/dashboard`;
+};
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,7 +58,7 @@ const Login = () => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: getAuthRedirectUrl(),
         data: { full_name: fullName },
       },
     });
@@ -73,7 +78,7 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: getAuthRedirectUrl(),
         queryParams: {
           access_type: "offline",
           prompt: "consent",
