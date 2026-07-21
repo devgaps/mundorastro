@@ -1,73 +1,193 @@
-# Welcome to your Lovable project
+# MundoRastro
 
-## Project info
+> Sistema de gestão rural para organizar a operação agrícola, da propriedade à expedição, com rastreabilidade de lotes por QR Code.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+O **MundoRastro** centraliza informações operacionais, produtivas e administrativas de propriedades rurais. A aplicação conta com autenticação, controle de acesso, dados persistidos no Supabase e uma consulta pública de rastreabilidade para os lotes cadastrados.
 
-## How can I edit this code?
+## Principais recursos
 
-There are several ways of editing your application.
+- Gestão de propriedades, talhões, safras e equipamentos;
+- Registro de atividades no caderno de campo e de produção/colheita;
+- Rastreabilidade de lotes com geração de etiquetas e QR Code;
+- Consulta pública de lotes por código;
+- Controle de estoque, compras, expedições e movimentações financeiras;
+- Gestão de documentos, usuários, permissões e configurações;
+- Dashboard com indicadores, alertas e atividades recentes;
+- Exportação de relatórios em CSV;
+- Tema claro/escuro.
 
-**Use Lovable**
+## Tecnologias
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+| Camada | Tecnologias |
+| --- | --- |
+| Front-end | React 18, TypeScript, Vite |
+| Interface | Tailwind CSS, shadcn/ui, Radix UI, Lucide |
+| Dados e estado | Supabase, TanStack Query |
+| Formulários | React Hook Form, Zod |
+| Gráficos e QR Code | Recharts, qrcode |
+| Qualidade | ESLint |
 
-Changes made via Lovable will be committed automatically to this repo.
+## Módulos do sistema
 
-**Use your preferred IDE**
+| Módulo | Finalidade |
+| --- | --- |
+| Dashboard | Acompanha indicadores, alertas, safras e atividades recentes. |
+| Propriedades e talhões | Mantém o cadastro das unidades rurais e das áreas de cultivo. |
+| Safras | Organiza ciclos de cultivo. |
+| Equipamentos | Registra máquinas, status e manutenções. |
+| Caderno de campo | Registra atividades agronômicas. |
+| Produção | Controla registros de colheita e produção. |
+| Rastreabilidade | Cria e acompanha lotes rastreáveis. |
+| Consulta QR Code | Permite consultar publicamente um lote pelo seu código. |
+| Estoque e compras | Controla itens, níveis mínimos e pedidos de compra. |
+| Expedição | Registra a saída e o envio de lotes. |
+| Etiquetas | Gera etiquetas associadas a lotes. |
+| Financeiro | Organiza transações financeiras. |
+| Documentos | Armazena documentos vinculados à operação e às propriedades. |
+| Usuários | Exibe usuários e seus papéis de acesso. |
+| Configurações | Salva preferências por usuário. |
+| Relatórios | Exporta dados operacionais em CSV. |
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Pré-requisitos
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- [Node.js](https://nodejs.org/) 18 ou superior;
+- npm 9 ou superior;
+- Um projeto no [Supabase](https://supabase.com/).
 
-Follow these steps:
+> O projeto também possui `bun.lockb`; caso prefira Bun, use `bun install` e substitua os comandos `npm run` por `bun run`.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Instalação e execução
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Clone o repositório e entre na pasta do projeto:
 
-# Step 3: Install the necessary dependencies.
-npm i
+   ```bash
+   git clone https://github.com/devgaps/mundorastro.git
+   cd mundorastro
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+2. Instale as dependências:
+
+   ```bash
+   npm install
+   ```
+
+3. Crie um arquivo `.env` na raiz, a partir do exemplo abaixo:
+
+   ```env
+   VITE_SUPABASE_PROJECT_ID=seu-project-id
+   VITE_SUPABASE_URL=https://seu-project-id.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=sua-chave-anon-ou-publishable
+   VITE_APP_URL=http://localhost:5173
+   ```
+
+4. Aplique as migrations do Supabase, conforme a seção [Banco de dados](#banco-de-dados-supabase).
+
+5. Inicie o ambiente de desenvolvimento:
+
+   ```bash
+   npm run dev
+   ```
+
+6. Abra a URL exibida pelo Vite — normalmente `http://localhost:5173`.
+
+## Comandos disponíveis
+
+| Comando | Descrição |
+| --- | --- |
+| `npm run dev` | Inicia o servidor de desenvolvimento. |
+| `npm run build` | Gera a versão de produção em `dist/`. |
+| `npm run build:dev` | Gera o build usando o modo `development`. |
+| `npm run preview` | Serve localmente o último build de produção. |
+| `npm run lint` | Executa a verificação do ESLint. |
+
+## Banco de dados (Supabase)
+
+O Supabase fornece autenticação, banco PostgreSQL, políticas de acesso por linha (RLS) e armazenamento de documentos.
+
+As migrations estão em [`supabase/migrations`](./supabase/migrations). Em um projeto novo, aplique-as em ordem cronológica. É possível usar a CLI do Supabase ou copiar o conteúdo de cada arquivo para o **SQL Editor** do painel do Supabase.
+
+```bash
+# Exemplo com a CLI do Supabase vinculada ao projeto
+supabase db push
 ```
 
-**Edit a file directly in GitHub**
+As migrations criam, entre outras, as tabelas:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+`profiles`, `user_roles`, `propriedades`, `talhoes`, `safras`, `caderno_campo`, `producao`, `compras`, `estoque`, `movimentacoes_estoque`, `lotes_rastreabilidade`, `expedicao`, `financeiro`, `equipamentos`, `documentos`, `etiquetas` e `configuracoes`.
 
-**Use GitHub Codespaces**
+A migration operacional também cria o bucket privado `documentos` e suas políticas de acesso. Para instruções específicas, consulte [`docs/APLICAR_MIGRATIONS_SUPABASE.md`](./docs/APLICAR_MIGRATIONS_SUPABASE.md).
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Autenticação e permissões
 
-## What technologies are used for this project?
+- O acesso ao painel exige autenticação por e-mail e senha.
+- O cadastro cria um perfil e atribui inicialmente o papel `operator`.
+- Os papéis disponíveis são `admin`, `manager` e `operator`.
+- As tabelas usam RLS para restringir os dados ao proprietário (`user_id`), com acesso administrativo quando aplicável.
+- A rota `/consulta-qrcode` é pública e permite consultar um lote rastreável pelo código informado.
 
-This project is built with:
+Para usar Google OAuth, habilite o provedor no painel do Supabase/Lovable e configure as URLs de redirecionamento de acordo com os ambientes utilizados.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Rotas
 
-## How can I deploy this project?
+| Rota | Acesso | Página |
+| --- | --- | --- |
+| `/login` | Público | Entrada e cadastro de usuários. |
+| `/consulta-qrcode` | Público | Consulta de lote por código/QR Code. |
+| `/dashboard` | Autenticado | Visão geral do sistema. |
+| `/propriedades`, `/talhoes`, `/safras` | Autenticado | Cadastros agrícolas. |
+| `/equipamentos`, `/caderno-de-campo`, `/producao` | Autenticado | Operação rural. |
+| `/rastreabilidade`, `/expedicao`, `/etiquetas` | Autenticado | Gestão de lotes e envios. |
+| `/estoque`, `/compras`, `/financeiro` | Autenticado | Gestão operacional e financeira. |
+| `/relatorios`, `/usuarios`, `/documentos`, `/configuracoes` | Autenticado | Administração do sistema. |
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Estrutura do projeto
 
-## Can I connect a custom domain to my Lovable project?
+```text
+.
+├── docs/                         # Documentação técnica e de operação
+├── public/                       # Arquivos estáticos
+├── src/
+│   ├── components/               # Componentes de interface e layout
+│   ├── hooks/                    # Hooks, incluindo autenticação
+│   ├── integrations/supabase/    # Cliente e tipos do Supabase
+│   ├── pages/                    # Páginas e módulos do sistema
+│   ├── services/                 # Acesso a dados por domínio
+│   ├── App.tsx                   # Rotas e provedores da aplicação
+│   └── main.tsx                  # Ponto de entrada do React
+├── supabase/
+│   ├── config.toml               # Configuração da CLI do Supabase
+│   └── migrations/               # Evolução do banco de dados
+├── .env                          # Variáveis locais (não versionar segredos)
+└── package.json                  # Dependências e scripts
+```
 
-Yes, you can!
+## Desenvolvimento
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- Mantenha regras de negócio e consultas ao Supabase em `src/services`.
+- Use TanStack Query para consultas, mutações e invalidação de cache.
+- Crie uma migration para toda alteração de schema; não altere manualmente o banco sem registrar a mudança no repositório.
+- Execute `npm run lint` e `npm run build` antes de enviar alterações para revisão.
+- Nunca publique a chave `service_role` ou outros segredos do Supabase no front-end. As variáveis `VITE_*` são expostas no bundle do navegador.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Problemas comuns
+
+### A aplicação não conecta ao Supabase
+
+Confira se `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` estão preenchidas corretamente no `.env`. Depois de alterar variáveis de ambiente, reinicie o Vite.
+
+### Uma tabela ou bucket não existe
+
+Verifique se todas as migrations foram aplicadas. Para equipamentos, documentos, etiquetas e configurações, aplique especificamente a migration `20260605190000_add_operational_storage_tables.sql`.
+
+### Erro de permissão ao consultar ou salvar dados
+
+Confirme se o usuário está autenticado e revise as políticas RLS no Supabase. Os registros são associados ao usuário autenticado por meio de `user_id`.
+
+## Documentação adicional
+
+- [Plano de backend](./docs/BACKEND_PLAN.md)
+- [Como aplicar as migrations do Supabase](./docs/APLICAR_MIGRATIONS_SUPABASE.md)
+
+## Licença
+
+Este repositório não possui uma licença declarada. Antes de redistribuir ou reutilizar o código, defina uma licença adequada com os responsáveis pelo projeto.
