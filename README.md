@@ -1,6 +1,6 @@
 # MundoRastro
 
-> Sistema de gestão rural para organizar a operação agrícola, da propriedade à expedição, com rastreabilidade de lotes por QR Code.
+> Sistema de gestão rural para organização das operações agrícolas, da propriedade à expedição, com rastreabilidade de lotes por QR Code.
 
 O **MundoRastro** centraliza informações operacionais, produtivas e administrativas de propriedades rurais. A aplicação conta com autenticação, controle de acesso, dados persistidos no Supabase e uma consulta pública de rastreabilidade para os lotes cadastrados.
 
