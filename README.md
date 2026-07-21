@@ -68,7 +68,7 @@ O **MundoRastro** centraliza informações operacionais, produtivas e administra
 2. Instale as dependências:
 
    ```bash
-   npm install
+   npm ci
    ```
 
 3. Crie um arquivo `.env` na raiz, a partir do exemplo abaixo:
